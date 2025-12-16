@@ -49,7 +49,7 @@ function OrganizationItem({
       onClick={() => onSelect(org.id)}
     >
       <Avatar className="size-6 rounded-sm border">
-        <AvatarImage src={org.logo || undefined} />
+        <AvatarImage className="rounded-sm" src={org.logo || undefined} />
         <AvatarFallback>{org.name.slice(0, 2)}</AvatarFallback>
       </Avatar>
       {org.name}
@@ -63,19 +63,21 @@ function OrganizationItem({
 function OrganizationTrigger({
   activeOrganization,
   isSwitching,
+  ...props
 }: {
   activeOrganization: NonNullable<
     ReturnType<typeof useOrganizationsContext>["activeOrganization"]
   >;
   isSwitching: boolean;
-}) {
+} & React.ComponentProps<typeof SidebarMenuButton>) {
   return (
     <SidebarMenuButton
+      {...props}
       className={cn(
         "data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground",
         isSwitching ? "cursor-not-allowed opacity-70" : ""
+        props.className
       )}
-      disabled={isSwitching}
       size="lg"
     >
       <Avatar className="size-8">
@@ -149,19 +151,41 @@ export function OrgSelector() {
   };
 
   const { ownedOrganizations, sharedOrganizations } = useMemo(() => {
+    if (!organizations || organizations.length === 0) {
+      return { ownedOrganizations: [], sharedOrganizations: [] };
+    }
+
+    // Debug: log organizations to see their structure
+    if (process.env.NODE_ENV === "development") {
+      console.log("[OrgSelector] Organizations:", organizations);
+      console.log("[OrgSelector] Active Organization:", activeOrganization);
+    }
+
     const owned =
-      organizations?.filter(
+      organizations.filter(
         (organization) =>
           "role" in organization && organization.role === "owner"
       ) || [];
     const shared =
-      organizations?.filter(
+      organizations.filter(
         (organization) =>
           "currentUserRole" in organization &&
           organization.currentUserRole !== "owner"
       ) || [];
+
+    // Ensure active organization is included if it exists
+    // If active org is not in either list, add it to owned by default
+    if (activeOrganization) {
+      const isInOwned = owned.some((org) => org.id === activeOrganization.id);
+      const isInShared = shared.some((org) => org.id === activeOrganization.id);
+      if (!(isInOwned || isInShared)) {
+        // Active org not found in lists, add it to owned
+        owned.push(activeOrganization);
+      }
+    }
+
     return { ownedOrganizations: owned, sharedOrganizations: shared };
-  }, [organizations]);
+  }, [organizations, activeOrganization]);
 
   const showSkeleton = isLoading && activeOrganization === null;
 
@@ -169,12 +193,13 @@ export function OrgSelector() {
     <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu
-          onOpenChange={() => {
-            setIsCollapsed(!isCollapsed);
+          onOpenChange={(open) => {
+            setIsCollapsed(!open);
           }}
           open={!isCollapsed}
         >
           <DropdownMenuTrigger
+            disabled={showSkeleton}
             render={
               activeOrganization !== null && !showSkeleton ? (
                 <OrganizationTrigger
@@ -192,9 +217,6 @@ export function OrgSelector() {
             side={isMobile ? "bottom" : "right"}
             sideOffset={4}
           >
-            <DropdownMenuLabel className="text-muted-foreground text-xs">
-              Organizations
-            </DropdownMenuLabel>
             {ownedOrganizations.length > 0 && (
               <DropdownMenuGroup>
                 <DropdownMenuLabel className="text-muted-foreground text-xs">
@@ -230,11 +252,32 @@ export function OrgSelector() {
               </DropdownMenuGroup>
             )}
 
+            {/* Fallback: Show all organizations if filtering resulted in empty lists */}
+            {ownedOrganizations.length === 0 &&
+              sharedOrganizations.length === 0 &&
+              organizations &&
+              organizations.length > 0 && (
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel className="text-muted-foreground text-xs">
+                    Organizations
+                  </DropdownMenuLabel>
+                  {organizations.map((org) => (
+                    <OrganizationItem
+                      isActive={activeOrganization?.id === org.id}
+                      isDisabled={isSwitching}
+                      key={org.id}
+                      onSelect={handleSelectOrganization}
+                      org={org}
+                    />
+                  ))}
+                </DropdownMenuGroup>
+              )}
+
             <DropdownMenuSeparator />
             <DropdownMenuItem
               className="gap-2 p-2"
-              onClick={() => {
-                setIsCollapsed(!isCollapsed);
+              onClick={(open) => {
+                setIsCollapsed(!open);
               }}
             >
               <div className="flex size-6 items-center justify-center rounded-md border bg-background">

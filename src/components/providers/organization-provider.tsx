@@ -1,8 +1,8 @@
 "use client";
 
-import { useQueries } from "@tanstack/react-query";
+import { useQueries, useQueryClient } from "@tanstack/react-query";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { type ReactNode, useEffect } from "react";
+import { type ReactNode, useEffect, useRef } from "react";
 import { authClient } from "@/lib/auth/client";
 import {
   activeOrganizationAtom,
@@ -17,9 +17,11 @@ export type Organization = NonNullable<
 >[number];
 
 export function OrganizationsProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
   const setOrganizations = useSetAtom(organizationsAtom);
   const setActiveOrganization = useSetAtom(activeOrganizationAtom);
   const setIsLoading = useSetAtom(isLoadingOrganizationsAtom);
+  const hasAutoSelectedRef = useRef(false);
 
   const [
     { data: organizationsData, isPending: isLoadingOrgs },
@@ -56,6 +58,62 @@ export function OrganizationsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     setActiveOrganization(activeOrganization ?? null);
   }, [activeOrganization, setActiveOrganization]);
+
+  // Auto-select first organization if no active organization is set
+  useEffect(() => {
+    // Only run when both queries are done (not loading) and we have organizations
+    // Use ref to prevent running multiple times
+    if (
+      !(isLoadingOrgs || isLoadingActive) &&
+      organizationsData &&
+      organizationsData.length > 0 &&
+      !activeOrganization &&
+      !hasAutoSelectedRef.current
+    ) {
+      // Automatically set the first organization as active
+      const firstOrg = organizationsData[0];
+      if (firstOrg) {
+        hasAutoSelectedRef.current = true;
+        // Set it in the atom immediately for UI
+        setActiveOrganization(firstOrg);
+        // Also set it on the server
+        authClient.organization
+          .setActive({ organizationId: firstOrg.id })
+          .then((result) => {
+            if (result.error) {
+              console.error(
+                "Failed to auto-set active organization:",
+                result.error
+              );
+              // Revert the atom if server call failed
+              setActiveOrganization(null);
+              hasAutoSelectedRef.current = false;
+            } else {
+              // Invalidate queries to sync with server
+              queryClient.invalidateQueries({
+                queryKey: QUERY_KEYS.AUTH.activeOrganization,
+              });
+            }
+          })
+          .catch((error) => {
+            console.error("Error auto-setting active organization:", error);
+            setActiveOrganization(null);
+            hasAutoSelectedRef.current = false;
+          });
+      }
+    }
+    // Reset ref if activeOrganization becomes null (user cleared it)
+    if (activeOrganization === null && hasAutoSelectedRef.current) {
+      hasAutoSelectedRef.current = false;
+    }
+  }, [
+    isLoadingOrgs,
+    isLoadingActive,
+    organizationsData,
+    activeOrganization,
+    setActiveOrganization,
+    queryClient,
+  ]);
 
   useEffect(() => {
     setIsLoading(isLoadingOrgs || isLoadingActive);
