@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1765803610576,
-      "tag": "0000_white_zarek",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1766149367171,
-      "tag": "0001_true_thunderball",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1766158935722,
-      "tag": "0002_great_tenebrous",
+      "when": 1766407501078,
+      "tag": "0000_tiny_mole_man",
       "breakpoints": true
     }
   ]

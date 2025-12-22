@@ -138,8 +138,8 @@ export function RepositoryList({ integrationId }: RepositoryListProps) {
               {repo.owner}/{repo.repo}
             </CardTitle>
             <CardDescription>
-              {repo.outputs.length} output
-              {repo.outputs.length !== 1 ? "s" : ""} configured
+              {repo.outputs?.length ?? 0} output
+              {(repo.outputs?.length ?? 0) !== 1 ? "s" : ""} configured
             </CardDescription>
             <CardAction>
               <div className="flex items-center gap-2">
@@ -171,7 +171,7 @@ export function RepositoryList({ integrationId }: RepositoryListProps) {
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2">
-              {repo.outputs.map((output) => (
+              {repo.outputs?.map((output) => (
                 <Badge
                   key={output.id}
                   variant={output.enabled ? "default" : "secondary"}

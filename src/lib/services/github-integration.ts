@@ -3,8 +3,8 @@ import { customAlphabet } from "nanoid";
 import { decryptToken, encryptToken } from "@/lib/crypto/token-encryption";
 import { db } from "@/lib/db/drizzle";
 import {
-  integrationRepositories,
-  integrations,
+  githubIntegrations,
+  githubRepositories,
   members,
   repositoryOutputs,
 } from "@/lib/db/schema";
@@ -12,15 +12,18 @@ import { createOctokit } from "../octokit";
 
 const nanoid = customAlphabet("abcdefghijklmnopqrstuvwxyz0123456789", 16);
 
-export type IntegrationType = "github";
-export type OutputType = "changelog" | "blog_post" | "tweet";
+export type OutputType =
+  | "changelog"
+  | "blog_post"
+  | "twitter_post"
+  | "linkedin_post"
+  | "investor_update";
 
-type CreateIntegrationParams = {
+type CreateGitHubIntegrationParams = {
   organizationId: string;
   userId: string;
   token: string | null;
   displayName: string;
-  type: IntegrationType;
   owner: string;
   repo: string;
 };
@@ -56,9 +59,10 @@ export async function validateUserOrgAccess(
   return !!member;
 }
 
-export async function createIntegration(params: CreateIntegrationParams) {
-  const { organizationId, userId, token, displayName, type, owner, repo } =
-    params;
+export async function createGitHubIntegration(
+  params: CreateGitHubIntegrationParams
+) {
+  const { organizationId, userId, token, displayName, owner, repo } = params;
 
   const hasAccess = await validateUserOrgAccess(userId, organizationId);
   if (!hasAccess) {
@@ -96,12 +100,11 @@ export async function createIntegration(params: CreateIntegrationParams) {
   }
 
   const [integration] = await db
-    .insert(integrations)
+    .insert(githubIntegrations)
     .values({
       id: nanoid(),
       organizationId,
       createdByUserId: userId,
-      type,
       encryptedToken,
       displayName,
       enabled: true,
@@ -109,7 +112,7 @@ export async function createIntegration(params: CreateIntegrationParams) {
     .returning();
 
   const [repository] = await db
-    .insert(integrationRepositories)
+    .insert(githubRepositories)
     .values({
       id: nanoid(),
       integrationId: integration.id,
@@ -146,9 +149,9 @@ export async function createIntegration(params: CreateIntegrationParams) {
   return integration;
 }
 
-export function getIntegrationsByOrganization(organizationId: string) {
-  return db.query.integrations.findMany({
-    where: eq(integrations.organizationId, organizationId),
+export function getGitHubIntegrationsByOrganization(organizationId: string) {
+  return db.query.githubIntegrations.findMany({
+    where: eq(githubIntegrations.organizationId, organizationId),
     with: {
       createdByUser: {
         columns: {
@@ -167,9 +170,9 @@ export function getIntegrationsByOrganization(organizationId: string) {
   });
 }
 
-export function getIntegrationById(integrationId: string) {
-  return db.query.integrations.findFirst({
-    where: eq(integrations.id, integrationId),
+export function getGitHubIntegrationById(integrationId: string) {
+  return db.query.githubIntegrations.findFirst({
+    where: eq(githubIntegrations.id, integrationId),
     with: {
       organization: true,
       createdByUser: {
@@ -193,7 +196,7 @@ export async function getDecryptedToken(
   integrationId: string,
   userId: string
 ): Promise<string | null> {
-  const integration = await getIntegrationById(integrationId);
+  const integration = await getGitHubIntegrationById(integrationId);
 
   if (!integration) {
     throw new Error("Integration not found");
@@ -218,13 +221,13 @@ export async function getDecryptedToken(
 export async function addRepository(params: AddRepositoryParams) {
   const { integrationId, owner, repo, outputs = [] } = params;
 
-  const integration = await getIntegrationById(integrationId);
+  const integration = await getGitHubIntegrationById(integrationId);
   if (!integration) {
     throw new Error("Integration not found");
   }
 
   const [repository] = await db
-    .insert(integrationRepositories)
+    .insert(githubRepositories)
     .values({
       id: nanoid(),
       integrationId,
@@ -250,8 +253,8 @@ export async function addRepository(params: AddRepositoryParams) {
 }
 
 export function getRepositoryById(repositoryId: string) {
-  return db.query.integrationRepositories.findFirst({
-    where: eq(integrationRepositories.id, repositoryId),
+  return db.query.githubRepositories.findFirst({
+    where: eq(githubRepositories.id, repositoryId),
     with: {
       integration: true,
       outputs: true,
@@ -295,14 +298,14 @@ export async function configureOutput(params: ConfigureOutputParams) {
   return created;
 }
 
-export async function toggleIntegration(
+export async function toggleGitHubIntegration(
   integrationId: string,
   enabled: boolean
 ) {
   const [updated] = await db
-    .update(integrations)
+    .update(githubIntegrations)
     .set({ enabled })
-    .where(eq(integrations.id, integrationId))
+    .where(eq(githubIntegrations.id, integrationId))
     .returning();
 
   return updated;
@@ -310,22 +313,24 @@ export async function toggleIntegration(
 
 export async function toggleRepository(repositoryId: string, enabled: boolean) {
   const [updated] = await db
-    .update(integrationRepositories)
+    .update(githubRepositories)
     .set({ enabled })
-    .where(eq(integrationRepositories.id, repositoryId))
+    .where(eq(githubRepositories.id, repositoryId))
     .returning();
 
   return updated;
 }
 
-export async function deleteIntegration(integrationId: string) {
-  await db.delete(integrations).where(eq(integrations.id, integrationId));
+export async function deleteGitHubIntegration(integrationId: string) {
+  await db
+    .delete(githubIntegrations)
+    .where(eq(githubIntegrations.id, integrationId));
 }
 
 export async function deleteRepository(repositoryId: string) {
   await db
-    .delete(integrationRepositories)
-    .where(eq(integrationRepositories.id, repositoryId));
+    .delete(githubRepositories)
+    .where(eq(githubRepositories.id, repositoryId));
 }
 
 export async function listAvailableRepositories(

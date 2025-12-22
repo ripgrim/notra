@@ -4,24 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { AddIntegrationDialog } from "@/components/integrations/add-integration-dialog";
 import { IntegrationCard } from "@/components/integrations/integration-card";
 import { Skeleton } from "@/components/ui/skeleton";
-
-type Integration = {
-  id: string;
-  displayName: string;
-  type: string;
-  enabled: boolean;
-  createdAt: string;
-  createdByUser: {
-    name: string;
-    email: string;
-  };
-  repositories: Array<{
-    id: string;
-    owner: string;
-    repo: string;
-    enabled: boolean;
-  }>;
-};
+import type { GitHubIntegration } from "@/types/integrations";
 
 type PageClientProps = {
   organizationId: string;
@@ -43,7 +26,7 @@ export default function PageClient({ organizationId }: PageClientProps) {
         throw new Error("Failed to fetch integrations");
       }
 
-      return response.json() as Promise<Integration[]>;
+      return response.json() as Promise<GitHubIntegration[]>;
     },
   });
 

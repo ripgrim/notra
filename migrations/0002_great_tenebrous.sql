@@ -1,1 +1,0 @@
-ALTER TABLE "integrations" ALTER COLUMN "encrypted_token" DROP NOT NULL;

@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/auth/session";
 import {
   addRepository,
-  getIntegrationById,
+  getGitHubIntegrationById,
   listAvailableRepositories,
   validateUserOrgAccess,
 } from "@/lib/services/github-integration";
@@ -38,7 +38,7 @@ export async function POST(
     }
 
     const { integrationId } = paramValidation.data;
-    const integration = await getIntegrationById(integrationId);
+    const integration = await getGitHubIntegrationById(integrationId);
 
     if (!integration) {
       return NextResponse.json(
@@ -117,7 +117,7 @@ export async function GET(
     }
 
     const { integrationId } = paramValidation.data;
-    const integration = await getIntegrationById(integrationId);
+    const integration = await getGitHubIntegrationById(integrationId);
 
     if (!integration) {
       return NextResponse.json(

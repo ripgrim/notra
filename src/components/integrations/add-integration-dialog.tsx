@@ -28,8 +28,8 @@ import type {
 } from "@/types/integrations";
 import { QUERY_KEYS } from "@/utils/query-keys";
 import {
-  type AddIntegrationFormValues,
-  addIntegrationFormSchema,
+  type AddGitHubIntegrationFormValues,
+  addGitHubIntegrationFormSchema,
 } from "@/utils/schemas/integrations";
 
 export function AddIntegrationDialog({
@@ -47,7 +47,7 @@ export function AddIntegrationDialog({
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: async (values: AddIntegrationFormValues) => {
+    mutationFn: async (values: AddGitHubIntegrationFormValues) => {
       if (!organizationId) {
         throw new Error("Organization ID is required");
       }
@@ -99,7 +99,7 @@ export function AddIntegrationDialog({
     },
     onSubmit: ({ value }) => {
       // Validate with Zod before submitting
-      const validationResult = addIntegrationFormSchema.safeParse(value);
+      const validationResult = addGitHubIntegrationFormSchema.safeParse(value);
       if (!validationResult.success) {
         return;
       }
@@ -143,7 +143,7 @@ export function AddIntegrationDialog({
               <form.Field
                 name="repoUrl"
                 validators={{
-                  onChange: addIntegrationFormSchema.shape.repoUrl,
+                  onChange: addGitHubIntegrationFormSchema.shape.repoUrl,
                   onChangeAsyncDebounceMs: 300,
                   onChangeAsync: async ({ value }) => {
                     if (!value.trim()) {

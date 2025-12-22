@@ -1,31 +1,34 @@
 import type React from "react";
+import type { IntegrationType } from "@/utils/schemas/integrations";
 
-export type Integration = {
+export type RepositoryOutput = {
+  id: string;
+  outputType: string;
+  enabled: boolean;
+};
+
+export type GitHubRepository = {
+  id: string;
+  owner: string;
+  repo: string;
+  enabled: boolean;
+  outputs?: RepositoryOutput[];
+};
+
+export type Repository = GitHubRepository;
+
+export type GitHubIntegration = {
   id: string;
   displayName: string;
-  type: string;
   enabled: boolean;
   createdAt: string;
   createdByUser?: {
+    id: string;
     name: string;
     email: string;
+    image: string | null;
   };
-  repositories: Array<{
-    id: string;
-    owner: string;
-    repo: string;
-    enabled: boolean;
-  }>;
-};
-
-export type IntegrationConfig = {
-  id: string;
-  name: string;
-  description: string;
-  icon: React.ReactNode;
-  href: string;
-  available: boolean;
-  category: "input" | "output";
+  repositories: GitHubRepository[];
 };
 
 export type GitHubRepoInfo = {
@@ -42,16 +45,14 @@ export type AvailableRepo = {
   description: string | null;
 };
 
-export type Repository = {
-  id: string;
-  owner: string;
-  repo: string;
-  enabled: boolean;
-  outputs: Array<{
-    id: string;
-    outputType: string;
-    enabled: boolean;
-  }>;
+export type IntegrationUIConfig = {
+  id: IntegrationType;
+  name: string;
+  description: string;
+  icon: React.ReactNode;
+  href: string;
+  available: boolean;
+  category: "input" | "output";
 };
 
 export type AddIntegrationDialogProps = {
@@ -71,7 +72,7 @@ export type AddRepositoryDialogProps = {
 };
 
 export type IntegrationCardProps = {
-  integration: Integration;
+  integration: GitHubIntegration;
   onUpdate?: () => void;
 };
 

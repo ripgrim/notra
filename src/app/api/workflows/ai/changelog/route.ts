@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { githubChangelogAgent } from "@/lib/agents/changelog";
+import { generateChangelogBodySchema } from "@/utils/schemas/workflows";
 
 export async function POST(request: Request) {
   try {

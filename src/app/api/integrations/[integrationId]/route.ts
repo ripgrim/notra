@@ -1,9 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/auth/session";
 import {
-  deleteIntegration,
-  getIntegrationById,
-  toggleIntegration,
+  deleteGitHubIntegration,
+  getGitHubIntegrationById,
+  toggleGitHubIntegration,
   validateUserOrgAccess,
 } from "@/lib/services/github-integration";
 import {
@@ -38,7 +38,7 @@ export async function GET(
     }
 
     const { integrationId } = paramValidation.data;
-    const integration = await getIntegrationById(integrationId);
+    const integration = await getGitHubIntegrationById(integrationId);
 
     if (!integration) {
       return NextResponse.json(
@@ -93,7 +93,7 @@ export async function PATCH(
     }
 
     const { integrationId } = paramValidation.data;
-    const integration = await getIntegrationById(integrationId);
+    const integration = await getGitHubIntegrationById(integrationId);
 
     if (!integration) {
       return NextResponse.json(
@@ -125,7 +125,7 @@ export async function PATCH(
     }
 
     const { enabled } = bodyValidation.data;
-    const updated = await toggleIntegration(integrationId, enabled);
+    const updated = await toggleGitHubIntegration(integrationId, enabled);
 
     return NextResponse.json(updated);
   } catch (error) {
@@ -164,7 +164,7 @@ export async function DELETE(
     }
 
     const { integrationId } = paramValidation.data;
-    const integration = await getIntegrationById(integrationId);
+    const integration = await getGitHubIntegrationById(integrationId);
 
     if (!integration) {
       return NextResponse.json(
@@ -182,7 +182,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    await deleteIntegration(integrationId);
+    await deleteGitHubIntegration(integrationId);
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -136,8 +136,8 @@ export const invitations = pgTable(
   ]
 );
 
-export const integrations = pgTable(
-  "integrations",
+export const githubIntegrations = pgTable(
+  "github_integrations",
   {
     id: text("id").primaryKey(),
     organizationId: text("organization_id")
@@ -146,9 +146,8 @@ export const integrations = pgTable(
     createdByUserId: text("created_by_user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    type: text("type").notNull(),
-    encryptedToken: text("encrypted_token"),
     displayName: text("display_name").notNull(),
+    encryptedToken: text("encrypted_token"),
     enabled: boolean("enabled").default(true).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
@@ -157,26 +156,26 @@ export const integrations = pgTable(
       .notNull(),
   },
   (table) => [
-    index("integrations_organizationId_idx").on(table.organizationId),
-    index("integrations_createdByUserId_idx").on(table.createdByUserId),
+    index("githubIntegrations_organizationId_idx").on(table.organizationId),
+    index("githubIntegrations_createdByUserId_idx").on(table.createdByUserId),
   ]
 );
 
-export const integrationRepositories = pgTable(
-  "integration_repositories",
+export const githubRepositories = pgTable(
+  "github_repositories",
   {
     id: text("id").primaryKey(),
     integrationId: text("integration_id")
       .notNull()
-      .references(() => integrations.id, { onDelete: "cascade" }),
+      .references(() => githubIntegrations.id, { onDelete: "cascade" }),
     owner: text("owner").notNull(),
     repo: text("repo").notNull(),
     enabled: boolean("enabled").default(true).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [
-    index("integrationRepositories_integrationId_idx").on(table.integrationId),
-    uniqueIndex("integrationRepositories_integration_owner_repo_uidx").on(
+    index("githubRepositories_integrationId_idx").on(table.integrationId),
+    uniqueIndex("githubRepositories_integration_owner_repo_uidx").on(
       table.integrationId,
       table.owner,
       table.repo
@@ -190,7 +189,7 @@ export const repositoryOutputs = pgTable(
     id: text("id").primaryKey(),
     repositoryId: text("repository_id")
       .notNull()
-      .references(() => integrationRepositories.id, { onDelete: "cascade" }),
+      .references(() => githubRepositories.id, { onDelete: "cascade" }),
     outputType: text("output_type").notNull(),
     enabled: boolean("enabled").default(true).notNull(),
     config: jsonb("config"),
@@ -210,7 +209,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   accounts: many(accounts),
   members: many(members),
   invitations: many(invitations),
-  integrations: many(integrations),
+  githubIntegrations: many(githubIntegrations),
 }));
 
 export const sessionsRelations = relations(sessions, ({ one }) => ({
@@ -230,7 +229,7 @@ export const accountsRelations = relations(accounts, ({ one }) => ({
 export const organizationsRelations = relations(organizations, ({ many }) => ({
   members: many(members),
   invitations: many(invitations),
-  integrations: many(integrations),
+  githubIntegrations: many(githubIntegrations),
 }));
 
 export const membersRelations = relations(members, ({ one }) => ({
@@ -255,27 +254,27 @@ export const invitationsRelations = relations(invitations, ({ one }) => ({
   }),
 }));
 
-export const integrationsRelations = relations(
-  integrations,
+export const githubIntegrationsRelations = relations(
+  githubIntegrations,
   ({ one, many }) => ({
     organization: one(organizations, {
-      fields: [integrations.organizationId],
+      fields: [githubIntegrations.organizationId],
       references: [organizations.id],
     }),
     createdByUser: one(users, {
-      fields: [integrations.createdByUserId],
+      fields: [githubIntegrations.createdByUserId],
       references: [users.id],
     }),
-    repositories: many(integrationRepositories),
+    repositories: many(githubRepositories),
   })
 );
 
-export const integrationRepositoriesRelations = relations(
-  integrationRepositories,
+export const githubRepositoriesRelations = relations(
+  githubRepositories,
   ({ one, many }) => ({
-    integration: one(integrations, {
-      fields: [integrationRepositories.integrationId],
-      references: [integrations.id],
+    integration: one(githubIntegrations, {
+      fields: [githubRepositories.integrationId],
+      references: [githubIntegrations.id],
     }),
     outputs: many(repositoryOutputs),
   })
@@ -284,9 +283,9 @@ export const integrationRepositoriesRelations = relations(
 export const repositoryOutputsRelations = relations(
   repositoryOutputs,
   ({ one }) => ({
-    repository: one(integrationRepositories, {
+    repository: one(githubRepositories, {
       fields: [repositoryOutputs.repositoryId],
-      references: [integrationRepositories.id],
+      references: [githubRepositories.id],
     }),
   })
 );

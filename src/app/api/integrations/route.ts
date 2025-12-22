@@ -1,11 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/auth/session";
 import {
-  createIntegration,
-  getIntegrationsByOrganization,
+  createGitHubIntegration,
+  getGitHubIntegrationsByOrganization,
 } from "@/lib/services/github-integration";
 import {
-  createIntegrationRequestSchema,
+  createGitHubIntegrationRequestSchema,
   getIntegrationsQuerySchema,
 } from "@/utils/schemas/integrations";
 
@@ -20,7 +20,8 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const validationResult = createIntegrationRequestSchema.safeParse(body);
+    const validationResult =
+      createGitHubIntegrationRequestSchema.safeParse(body);
 
     if (!validationResult.success) {
       return NextResponse.json(
@@ -32,18 +33,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { organizationId, owner, repo, token, type } = validationResult.data;
+    const data = validationResult.data;
+    const displayName = `${data.owner}/${data.repo}`;
 
-    const displayName = `${owner}/${repo}`;
-
-    const integration = await createIntegration({
-      organizationId,
+    const integration = await createGitHubIntegration({
+      organizationId: data.organizationId,
       userId: user.id,
-      token: token || null,
+      token: data.token || null,
       displayName,
-      type,
-      owner,
-      repo,
+      owner: data.owner,
+      repo: data.repo,
     });
 
     return NextResponse.json(integration);
@@ -87,7 +86,7 @@ export async function GET(request: NextRequest) {
 
     const { organizationId: validatedOrganizationId } = validationResult.data;
 
-    const integrations = await getIntegrationsByOrganization(
+    const integrations = await getGitHubIntegrationsByOrganization(
       validatedOrganizationId
     );
 
