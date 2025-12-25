@@ -7,7 +7,7 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex h-screen w-full lg:grid lg:grid-cols-2">
+    <div className="flex h-screen w-full items-center justify-center lg:grid lg:grid-cols-2 lg:items-stretch lg:justify-stretch">
       <div className="relative hidden lg:flex">
         <div className="absolute inset-0 flex items-center justify-center p-8">
           <div className="corner-squircle relative h-full w-full overflow-hidden rounded-xl supports-[corner-shape:squircle]:rounded-2xl">
