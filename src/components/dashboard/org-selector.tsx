@@ -7,6 +7,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useQueryClient } from "@tanstack/react-query";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -35,7 +36,14 @@ import {
   type Organization,
   useOrganizationsContext,
 } from "../providers/organization-provider";
-import { CreateOrgModal } from "./create-org-modal";
+
+const CreateOrgModal = dynamic(
+  () =>
+    import("./create-org-modal").then((mod) => ({
+      default: mod.CreateOrgModal,
+    })),
+  { ssr: false }
+);
 
 function OrgSelectorTrigger({
   isCollapsed,

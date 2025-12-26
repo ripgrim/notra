@@ -1,14 +1,22 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import dynamic from "next/dynamic";
 import { useState } from "react";
-import { EditIntegrationDialog } from "@/components/integrations/edit-integration-dialog";
 import { RepositoryList } from "@/components/integrations/repository-list";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { GitHubIntegration } from "@/types/integrations";
 import { QUERY_KEYS } from "@/utils/query-keys";
+
+const EditIntegrationDialog = dynamic(
+  () =>
+    import("@/components/integrations/edit-integration-dialog").then((mod) => ({
+      default: mod.EditIntegrationDialog,
+    })),
+  { ssr: false }
+);
 
 type PageClientProps = {
   integrationId: string;
