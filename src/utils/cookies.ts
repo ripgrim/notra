@@ -7,7 +7,7 @@ export const setLastVisitedOrganization = (
   maxAge: number = 30 * 86_400
 ) => {
   // biome-ignore lint/suspicious/noDocumentCookie: Client-side cookie needed for cross-tab persistence
-  document.cookie = `${LAST_VISITED_ORGANIZATION_COOKIE}=${organizationSlug}; max-age=${maxAge}; path=/`;
+  document.cookie = `${LAST_VISITED_ORGANIZATION_COOKIE}=${organizationSlug}; max-age=${maxAge}; path=/; SameSite=Lax; Secure`;
 };
 
 export const getLastVisitedOrganization = (
