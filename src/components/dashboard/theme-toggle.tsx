@@ -9,7 +9,7 @@ import { useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 
 export function ThemeToggle() {
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, resolvedTheme } = useTheme();
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
   const [mounted, setMounted] = useState(false);
@@ -18,7 +18,7 @@ export function ThemeToggle() {
     setMounted(true);
   }, []);
 
-  const isDark = theme === "dark";
+  const isDark = theme === "dark" || (theme === "system" && resolvedTheme === "dark");
 
   function handleToggle() {
     setTheme(isDark ? "light" : "dark");
