@@ -95,6 +95,7 @@ export function useBrandAnalysisProgress(organizationId: string) {
   };
 
   const startPolling = () => {
+    hasReset.current = false;
     queryClient.invalidateQueries({
       queryKey: QUERY_KEYS.BRAND.progress(organizationId),
     });
@@ -141,7 +142,7 @@ export function useAnalyzeBrand(organizationId: string) {
       return res.json();
     },
     onSuccess: () => {
-      startPolling();
+      setTimeout(startPolling, 1000);
     },
   });
 }
