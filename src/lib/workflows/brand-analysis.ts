@@ -87,13 +87,11 @@ export async function analyzeBrand(organizationId: string, url: string) {
 
     return brandInfo;
   } catch (error) {
-    const err = error as Error;
-
     await setProgress(organizationId, {
       status: "failed",
       currentStep,
       totalSteps: STEP_COUNT,
-      error: `[${status}] ${err.message}`,
+      error: `Unknown error while performing '${status}' step`,
     });
 
     throw error;
