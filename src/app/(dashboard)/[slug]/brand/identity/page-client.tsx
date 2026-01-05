@@ -118,7 +118,6 @@ interface ModalContentProps {
   setUrl: (url: string) => void;
   handleAnalyze: () => void;
   isPending: boolean;
-  debugWebsiteUrl?: string | null;
 }
 
 function ModalContent({
@@ -167,9 +166,10 @@ function ModalContent({
     <>
       <div className="flex gap-3">
         <Input
+          disabled={isPending}
           onChange={(e) => setUrl(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter") {
+            if (e.key === "Enter" && !isPending) {
               handleAnalyze();
             }
           }}
@@ -178,7 +178,14 @@ function ModalContent({
           value={url}
         />
         <Button disabled={isPending} onClick={handleAnalyze}>
-          {isPending ? "Starting..." : "Analyze"}
+          {isPending ? (
+            <>
+              <div className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              <span>Analyzing</span>
+            </>
+          ) : (
+            "Analyze"
+          )}
         </Button>
       </div>
       {progress.status === "failed" && (
@@ -284,10 +291,16 @@ function BrandForm({
             </div>
             <div className="flex max-w-sm gap-2">
               <div className="flex-1 rounded-md border bg-muted/50 px-3 py-2 text-sm">
-                {websiteUrl ?? "No website configured"}
+                {websiteUrl ? (
+                  websiteUrl
+                ) : (
+                  <span className="text-muted-foreground">
+                    No website configured
+                  </span>
+                )}
               </div>
               <Button
-                disabled={isReanalyzing}
+                disabled={isReanalyzing || !websiteUrl}
                 onClick={onReanalyze}
                 size="icon"
                 variant="outline"
@@ -558,7 +571,6 @@ export default function PageClient({ organizationSlug }: PageClientProps) {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <ModalContent
-                    debugWebsiteUrl={organization?.websiteUrl}
                     handleAnalyze={handleAnalyze}
                     isAnalyzing={isAnalyzing}
                     isLoadingSettings={false}
