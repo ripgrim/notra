@@ -1,6 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import PixelBlast from "@/components/PixelBlast";
 import { getLastActiveOrganization, getSession } from "@/lib/auth/actions";
 
 export default async function AuthLayout({
@@ -24,35 +24,13 @@ export default async function AuthLayout({
       <div className="relative hidden lg:flex">
         <div className="absolute inset-0 flex items-center justify-center p-8">
           <div className="corner-squircle relative h-full w-full overflow-hidden rounded-xl supports-[corner-shape:squircle]:rounded-2xl">
-            <Image
-              alt="Auth illustration"
-              className="object-cover"
-              fill
-              src="/auth.jpg"
-              unoptimized
+            <PixelBlast
+              color="#8b5cf6"
+              edgeFade={0}
+              patternDensity={2}
+              patternScale={1}
+              speed={0.5}
             />
-            <div className="absolute bottom-4 left-4 z-10">
-              <p className="text-sm text-white/80">
-                Photo by{" "}
-                <Link
-                  className="underline hover:text-white"
-                  href="https://pixabay.com/users/femava-840809/"
-                  rel="noopener noreferrer"
-                  target="_blank"
-                >
-                  femava
-                </Link>{" "}
-                on{" "}
-                <Link
-                  className="underline hover:text-white"
-                  href="https://pixabay.com"
-                  rel="noopener noreferrer"
-                  target="_blank"
-                >
-                  Pixabay
-                </Link>
-              </p>
-            </div>
           </div>
         </div>
       </div>
