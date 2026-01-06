@@ -1,11 +1,18 @@
 "use client";
 
-import { Refresh01Icon } from "@hugeicons/core-free-icons";
+import {
+  Loading02Icon,
+  MinusSignIcon,
+  Refresh01Icon,
+  Tick01Icon,
+} from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useForm } from "@tanstack/react-form";
 import { useAsyncDebouncedCallback } from "@tanstack/react-pacer";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
+// biome-ignore lint/performance/noNamespaceImport: Zod recommended way to import
+import * as z from "zod";
 import { useOrganizationsContext } from "@/components/providers/organization-provider";
 import { Button } from "@/components/ui/button";
 import {
@@ -118,7 +125,17 @@ interface ModalContentProps {
   setUrl: (url: string) => void;
   handleAnalyze: () => void;
   isPending: boolean;
-  debugWebsiteUrl?: string | null;
+}
+
+function GetStepperIcon(currentStep: number, index: number) {
+  if (currentStep < index) {
+    return MinusSignIcon;
+  }
+  if (currentStep > index) {
+    return Tick01Icon;
+  }
+
+  return Loading02Icon;
 }
 
 function ModalContent({
@@ -151,8 +168,15 @@ function ModalContent({
               key={step.value}
               value={step.value}
             >
-              <StepperTrigger>
-                <StepperIndicator />
+              <StepperTrigger className="px-2">
+                <StepperIndicator>
+                  <HugeiconsIcon
+                    className={
+                      progress.currentStep === index + 1 ? "animate-spin" : ""
+                    }
+                    icon={GetStepperIcon(progress.currentStep, index + 1)}
+                  />
+                </StepperIndicator>
                 <StepperTitle>{step.label}</StepperTitle>
               </StepperTrigger>
               <StepperSeparator />
@@ -166,19 +190,39 @@ function ModalContent({
   return (
     <>
       <div className="flex gap-3">
-        <Input
-          onChange={(e) => setUrl(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              handleAnalyze();
-            }
-          }}
-          placeholder="https://example.com"
-          type="url"
-          value={url}
-        />
+        <div
+          className={`flex w-full flex-row items-center rounded-md border transition-colors focus-within:border-primary ${progress.status === "failed" ? "border-destructive" : "border-border"} focus-within:border-ring focus-within:ring-ring/50`}
+        >
+          <label
+            className="border-border border-r px-2.5 py-1 text-base text-muted-foreground transition-colors"
+            htmlFor="brand-url-input"
+          >
+            https://
+          </label>
+          <input
+            className="px-2.5 py-1 text-base outline-none"
+            disabled={isPending}
+            id="brand-url-input"
+            onChange={(e) => setUrl(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !isPending) {
+                handleAnalyze();
+              }
+            }}
+            placeholder="example.com"
+            type="url"
+            value={url}
+          />
+        </div>
         <Button disabled={isPending} onClick={handleAnalyze}>
-          {isPending ? "Starting..." : "Analyze"}
+          {isPending ? (
+            <>
+              <div className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              <span>Analyzing</span>
+            </>
+          ) : (
+            "Analyze"
+          )}
         </Button>
       </div>
       {progress.status === "failed" && (
@@ -284,12 +328,18 @@ function BrandForm({
             </div>
             <div className="flex max-w-sm gap-2">
               <div className="flex-1 rounded-md border bg-muted/50 px-3 py-2 text-sm">
-                {websiteUrl ?? "No website configured"}
+                {websiteUrl ? (
+                  websiteUrl
+                ) : (
+                  <span className="text-muted-foreground">
+                    No website configured
+                  </span>
+                )}
               </div>
               <Button
-                disabled={isReanalyzing}
+                disabled={isReanalyzing || !websiteUrl}
                 onClick={onReanalyze}
-                size="icon"
+                size="icon-lg"
                 variant="outline"
               >
                 <HugeiconsIcon
@@ -448,16 +498,27 @@ export default function PageClient({ organizationSlug }: PageClientProps) {
   const analyzeMutation = useAnalyzeBrand(organizationId);
 
   const [url, setUrl] = useState("");
-  const effectiveUrl = url || organization?.websiteUrl || "";
+  const effectiveUrl = url.trim() || organization?.websiteUrl || "";
 
   const handleAnalyze = async () => {
-    if (!effectiveUrl.trim()) {
+    if (!effectiveUrl) {
       toast.error("Please enter a website URL");
       return;
     }
 
+    let urlToAnalyze = effectiveUrl;
+    if (!effectiveUrl.startsWith("https://")) {
+      urlToAnalyze = `https://${effectiveUrl}`;
+    }
+
+    const parseRes = z.url().safeParse(urlToAnalyze);
+    if (!parseRes.success) {
+      toast.error("Please enter a valid website URL");
+      return;
+    }
+
     try {
-      await analyzeMutation.mutateAsync(effectiveUrl);
+      await analyzeMutation.mutateAsync(urlToAnalyze);
       toast.success("Analysis started");
     } catch (error) {
       toast.error(
@@ -523,7 +584,7 @@ export default function PageClient({ organizationSlug }: PageClientProps) {
     return (
       <div className="flex flex-1 flex-col gap-4 py-4 md:gap-6 md:py-6">
         <div className="w-full px-4 lg:px-6">
-          <div className="relative min-h-[500px]">
+          <div className="relative min-h-125">
             <div className="pointer-events-none blur-sm">
               <div className="mb-6 space-y-1">
                 <h1 className="font-bold text-3xl tracking-tight">
@@ -558,7 +619,6 @@ export default function PageClient({ organizationSlug }: PageClientProps) {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <ModalContent
-                    debugWebsiteUrl={organization?.websiteUrl}
                     handleAnalyze={handleAnalyze}
                     isAnalyzing={isAnalyzing}
                     isLoadingSettings={false}
