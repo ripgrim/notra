@@ -141,8 +141,9 @@ export function OrgSelector() {
       });
 
       router.push(`/${org.slug}`);
-    } catch (_error) {
+    } catch (error) {
       toast.error("Failed to switch organization");
+      console.error(error);
     } finally {
       setIsSwitching(false);
     }
